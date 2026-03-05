@@ -1,0 +1,161 @@
+---
+grails:
+    profile: web
+    codegen:
+        defaultPackage: terceraunidad
+    gorm:
+        reactor:
+            events: false
+    # Configuración rescatada para permitir la subida de la imagenPerfil
+    controllers:
+        upload:
+            maxFileSize: 20971520  
+            maxRequestSize: 20971520
+
+info:
+    app:
+        name: '@info.app.name@'
+        version: '@info.app.version@'
+        grailsVersion: '@info.app.grailsVersion@'
+
+spring:
+    jmx:
+        unique-names: true
+    main:
+        banner-mode: "off"
+    # Límite de subida a nivel del servidor (requerido para el módulo Usuario)
+    servlet:
+        multipart:
+            enabled: true
+            max-file-size: 20MB
+            max-request-size: 20MB
+    groovy:
+        template:
+            check-template-location: false
+    devtools:
+        restart:
+            additional-exclude:
+                - '*.gsp'
+                - '**/*.gsp'
+                - '*.gson'
+                - '**/*.gson'
+                - 'logback-spring.xml'
+                - '*.properties'
+
+environments:
+    development:
+        management:
+            endpoints:
+                enabled-by-default: true
+                web:
+                    base-path: '/actuator'
+                    exposure:
+                        include: '*'
+    production:
+        management:
+            endpoints:
+                enabled-by-default: false
+
+---
+grails:
+    mime:
+        disable:
+            accept:
+                header:
+                    userAgents:
+                        - Gecko
+                        - WebKit
+                        - Presto
+                        - Trident
+        types:
+            all: '*/*'
+            atom: application/atom+xml
+            css: text/css
+            csv: text/csv
+            form: application/x-www-form-urlencoded
+            html:
+              - text/html
+              - application/xhtml+xml
+            js: text/javascript
+            json:
+              - application/json
+              - text/json
+            multipartForm: multipart/form-data
+            pdf: application/pdf
+            rss: application/rss+xml
+            text: text/plain
+            hal:
+              - application/hal+json
+              - application/hal+xml
+            xml:
+              - text/xml
+              - application/xml
+    urlmapping:
+        cache:
+            maxsize: 1000
+    controllers:
+        defaultScope: singleton
+    converters:
+        encoding: UTF-8
+    views:
+        default:
+            codec: html
+        gsp:
+            encoding: UTF-8
+            htmlcodec: xml
+            codecs:
+                expression: html
+                scriptlet: html
+                taglib: none
+                staticparts: none
+
+---
+hibernate:
+    cache:
+        queries: false
+        use_second_level_cache: false
+        use_query_cache: false
+    dialect: org.hibernate.dialect.MySQL8Dialect
+
+dataSource:
+    pooled: true
+    jmxExport: true
+    driverClassName: com.mysql.cj.jdbc.Driver
+    username: "rodnixco_admin"
+    password: "Paradise40??"
+
+environments:
+    development:
+        dataSource:
+            dbCreate: update
+            url: jdbc:mysql://rodnix.com.mx:3306/rodnixco_platform3?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+
+    test:
+        dataSource:
+            dbCreate: update
+            url: jdbc:h2:mem:testDb;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
+            driverClassName: org.h2.Driver
+            username: sa
+            password: ''
+
+    production:
+        grails:
+            serverURL: "https://escolar.rodnix.com.mx"
+        server:
+            use-forward-headers: true
+            forward-headers-strategy: framework
+
+        dataSource:
+            dbCreate: none
+            url: jdbc:mysql://rodnix.com.mx:3306/rodnixco_platform3?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+            properties:
+                poolName: GrailsHikariPool
+                maximumPoolSize: 10 
+                minimumIdle: 2      
+                connectionTimeout: 30000 
+                idleTimeout: 300000     
+                maxLifetime: 1800000
+                validationQuery: "SELECT 1"
+                testOnBorrow: true
+                testWhileIdle: true
+                testOnReturn: false
