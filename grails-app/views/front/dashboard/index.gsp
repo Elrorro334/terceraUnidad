@@ -133,6 +133,7 @@
             localStorage.removeItem('rodnix_jwt');
             window.location.href = '/front/auth/login';
         }
+        
     </script>
 </body>
 </html>
