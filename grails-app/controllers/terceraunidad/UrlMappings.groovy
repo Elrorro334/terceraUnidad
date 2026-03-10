@@ -14,7 +14,7 @@ class UrlMappings {
             parseRequest: true 
         }
 
-        "/"(controller: 'auth', action: 'login', namespace: 'front')
+        "/"(view: "/index")
         
         "500"(view: '/error')
         "404"(view: '/notFound')
