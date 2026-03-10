@@ -33,8 +33,7 @@
             96% { transform: translate(-2px, 0); text-shadow: 2px 0 #EF4444, -2px 0 #3B82F6; }
             98% { transform: translate(2px, 2px); text-shadow: -2px 0 #EF4444, 2px 0 #3B82F6; }
         }
-
-        /* Estilos inyectados para formatear el <g:renderException> de Grails en desarrollo */
+        /* Estilos inyectados para formatear el tag g:renderException de Grails en desarrollo */
         .grails-error-container h2 { @apply text-xl font-bold text-red-600 mb-4 border-b border-red-200 pb-2; }
         .grails-error-container .alert-danger { @apply bg-red-50 border-l-4 border-red-500 text-red-700 p-4 mb-4 rounded-r-md shadow-sm break-words; }
         .grails-error-container .message { @apply font-semibold; }
