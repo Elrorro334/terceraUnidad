@@ -23,7 +23,8 @@ spring:
         unique-names: true
     main:
         banner-mode: "off"
-    # Límite de subida a nivel del servidor (requerido para el módulo Usuario)
+    autoconfigure:
+        exclude: org.springframework.boot.autoconfigure.web.servlet.error.ErrorMvcAutoConfiguration
     servlet:
         multipart:
             enabled: true
