@@ -176,13 +176,11 @@
                         ctx.moveTo(particles[i].x, particles[i].y);
                         ctx.lineTo(particles[j].x, particles[j].y);
                         
-                        // Si una de las partículas es un error, el enlace se vuelve rojo simulando un corto circuito
                         if (particles[i].isError || particles[j].isError) {
-                            ctx.strokeStyle = `rgba(239, 68, 68, ${0.4 - dist/300})`; // Rojo
+                            ctx.strokeStyle = 'rgba(239, 68, 68, ' + (0.4 - dist/300) + ')'; // Rojo
                         } else {
-                            ctx.strokeStyle = `rgba(30, 58, 138, ${0.2 - dist/600})`; // Azul
+                            ctx.strokeStyle = 'rgba(30, 58, 138, ' + (0.2 - dist/600) + ')'; // Azul
                         }
-                        
                         ctx.lineWidth = 1;
                         ctx.stroke();
                     }

@@ -7,4 +7,8 @@ class AuthController {
     def login() {
         render(view: 'login')
     }
+
+    def resetPassword() {
+        render(view: 'resetPassword')
+    }
 }
