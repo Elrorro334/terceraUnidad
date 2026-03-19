@@ -3,11 +3,50 @@ package terceraunidad.back
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
 import terceraunidad.*
+import io.jsonwebtoken.Jwts
+import io.jsonwebtoken.security.Keys
 
 class PermisosPerfilController {
 
     static namespace = 'back'
     static responseFormats = ['json']
+
+    private static final String SECRET_KEY = "Rodnix_Platf0rm_S3cr3t_K3y_2026_JWT_Auth_Super_Safe"
+
+    def beforeInterceptor = [action: this.&verificarPrivilegiosAdmin]
+
+    private boolean verificarPrivilegiosAdmin() {
+        try {
+            String header = request.getHeader("Authorization")
+            if (!header || !header.startsWith("Bearer ")) {
+                render(status: 401, text: [success: false, message: "No autorizado: Token ausente"] as JSON)
+                return false
+            }
+
+            String token = header.substring(7)
+            def key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes("UTF-8"))
+
+            def claims = Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody()
+
+            Boolean isAdmin = claims.get("admin", Boolean.class)
+
+            if (!isAdmin) {
+                render(status: 403, text: [success: false, message: "Acceso denegado: Se requieren privilegios de Administrador"] as JSON)
+                return false
+            }
+
+            return true
+            
+        } catch (Exception e) {
+            log.error("Violación de seguridad o token inválido en PermisosPerfilController: ${e.message}")
+            render(status: 401, text: [success: false, message: "Sesión inválida o expirada"] as JSON)
+            return false
+        }
+    }
 
     def getPerfiles() {
         try {

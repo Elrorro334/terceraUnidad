@@ -119,15 +119,12 @@
     </div>
 
     <script>
-        // Opción escapeHtml: true para que si el servidor devuelve etiquetas <script>, Toastr solo muestre texto inofensivo
         toastr.options = { "closeButton": true, "progressBar": true, "positionClass": "toast-top-right", "timeOut": "5000", "escapeHtml": true };
 
-        // Función Anti-XSS básica: elimina los picos < y > de cualquier texto para que no puedan formar etiquetas HTML
         function sanitizarEntrada(texto) {
             return texto ? texto.replace(/[<>]/g, '').trim() : '';
         }
 
-        // LOGIN
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
@@ -140,9 +137,7 @@
             const btn = document.getElementById('submitBtn');
             const originalText = btn.innerText;
 
-            // Aplicamos la limpieza solo al momento de enviar
             const username = sanitizarEntrada(document.getElementById('username').value);
-            // La contraseña no se sanitiza para no borrarle al usuario símbolos válidos como < o >
             const password = document.getElementById('password').value; 
 
             btn.innerHTML = 'Validando...';
@@ -176,7 +171,6 @@
             }
         });
 
-        // RECUPERACIÓN
         function abrirModalRecuperar() {
             document.getElementById('form-recuperar').reset();
             document.getElementById('modal-recuperar').classList.remove('hidden');
@@ -191,7 +185,6 @@
             const btn = document.getElementById('btnRecuperar');
             const originalText = btn.innerText;
             
-            // Sanitizamos el correo
             const correo = sanitizarEntrada(document.getElementById('recoveryEmail').value);
 
             btn.innerHTML = 'Enviando...';

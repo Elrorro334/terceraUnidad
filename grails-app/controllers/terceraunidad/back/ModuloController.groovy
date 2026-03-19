@@ -31,7 +31,6 @@ class ModuloController {
                 order('id', 'desc')
             }
             
-            // Extraemos los menús solo para los módulos obtenidos en esta página (Mejora de performance)
             def menusMap = [:]
             if (!resultados.isEmpty()) {
                 def menus = Menu.withCriteria {
@@ -54,7 +53,6 @@ class ModuloController {
             
             render([success: true, data: data, total: resultados.totalCount] as JSON)
         } catch (Exception e) {
-            // Imprimimos la traza real en la consola para no debuguear a ciegas en el futuro
             e.printStackTrace()
             render(status: 500, text: [success: false, message: "Error interno del servidor al listar"] as JSON)
         }
@@ -83,7 +81,6 @@ class ModuloController {
         if (json.strNombreMenu) {
             Integer targetIdMenu = json.idMenu ? (json.idMenu as Integer) : null
             
-            // Si es un menú nuevo, calculamos el ID más alto y le sumamos 1
             if (!targetIdMenu) {
                 def maxId = Menu.createCriteria().get { projections { max('idMenu') } } as Integer
                 targetIdMenu = (maxId ?: 0) + 1

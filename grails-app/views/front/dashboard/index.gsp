@@ -24,7 +24,7 @@
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const token = localStorage.getItem('rodnix_jwt');
-        if (!token) return; // Si no hay token, el main.gsp ya lo está expulsando
+        if (!token) return;  
         try {
             const base64Url = token.split('.')[1];
             const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');

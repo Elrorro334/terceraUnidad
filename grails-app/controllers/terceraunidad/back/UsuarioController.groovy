@@ -21,8 +21,6 @@ class UsuarioController {
 
             def criteria = Usuario.createCriteria()
             def resultados = criteria.list(max: maxItems, offset: offsetItems) {
-                // CORRECCIÓN 1: Usamos 'join' en lugar de 'createAlias' para prevenir el N+1 
-                // sin alterar la estructura de la entidad de retorno.
                 join 'perfil'
                 
                 if (search) {
@@ -35,7 +33,6 @@ class UsuarioController {
             }
             
             def data = resultados.collect { u ->
-                // CORRECCIÓN 2: Generamos el Base64 como un String nativo estricto para no romper el convertidor JSON
                 String imgBase64 = null
                 if (u.imagenPerfil) {
                     imgBase64 = "data:image/jpeg;base64," + java.util.Base64.getEncoder().encodeToString(u.imagenPerfil)
@@ -81,7 +78,6 @@ class UsuarioController {
         render([success: true, data: data] as JSON)
     }
 
-    // --- FUNCIÓN PRIVADA DE SEGURIDAD PARA ARCHIVOS ---
     private boolean esImagenValida(MultipartFile archivo) {
         if (!archivo || archivo.empty) return true
 
@@ -102,7 +98,6 @@ class UsuarioController {
 
         return true
     }
-    // ----------------------------------------------------
 
     @Transactional
     def save() {

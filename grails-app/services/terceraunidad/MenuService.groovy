@@ -8,7 +8,6 @@ class MenuService {
     List<Map> obtenerMenuDinamico(Long idUsuario) {
         if (!idUsuario) return []
 
-        // Añadimos los campos bit a la consulta SELECT
         def resultados = Menu.executeQuery("""
             SELECT m.idMenu, m.strNombreMenu, mod.strNombreModulo, 
                    pp.bitAgregar, pp.bitEditar, pp.bitEliminar, pp.bitConsulta, pp.bitDetalle
@@ -32,7 +31,6 @@ class MenuService {
                 menuAgrupado[idMenu] = [nombre: nombreMenuPadre, modulos: []]
             }
             
-            // Guardamos los permisos por cada módulo
             menuAgrupado[idMenu].modulos.add([
                 nombre: nombreModulo,
                 permisos: [

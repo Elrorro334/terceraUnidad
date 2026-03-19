@@ -53,7 +53,7 @@ class PerfilController {
         def json = request.JSON
         Perfil perfil = new Perfil(
             strNombrePerfil: json.strNombrePerfil?.trim(),
-            bitAdministrador: false // Forzado a 0 (false)
+            bitAdministrador: false 
         )
 
         try {
@@ -74,7 +74,7 @@ class PerfilController {
 
         def json = request.JSON
         perfil.strNombrePerfil = json.strNombrePerfil?.trim()
-        perfil.bitAdministrador = false // Forzado a 0 (false)
+        perfil.bitAdministrador = false 
 
         try {
             perfil.save(flush: true, failOnError: true)
