@@ -19,21 +19,44 @@ class ModuloController {
 
     def list() {
         try {
-            int maxItems = 5
+            int maxItems = params.int('max') ?: 5
             int offsetItems = params.int('offset') ?: 0
-            def modulos = Modulo.list(max: maxItems, offset: offsetItems, sort: 'id', order: 'desc')
+            String search = params.search?.trim() ?: null
+
+            def criteria = Modulo.createCriteria()
+            def resultados = criteria.list(max: maxItems, offset: offsetItems) {
+                if (search) {
+                    ilike('strNombreModulo', "%${search}%")
+                }
+                order('id', 'desc')
+            }
             
-            def data = modulos.collect { mod ->
-                Menu menuAsignado = Menu.findByModulo(mod)
+            // Extraemos los menús solo para los módulos obtenidos en esta página (Mejora de performance)
+            def menusMap = [:]
+            if (!resultados.isEmpty()) {
+                def menus = Menu.withCriteria {
+                    'in'('modulo', resultados)
+                }
+                menus.each { mn ->
+                    menusMap[mn.modulo.id] = mn
+                }
+            }
+            
+            def data = resultados.collect { m ->
+                def menuRelacionado = menusMap[m.id]
                 [
-                    id: mod.id,
-                    strNombreModulo: mod.strNombreModulo,
-                    menuAsignado: menuAsignado ? menuAsignado.strNombreMenu : 'Sin asignar'
+                    id: m.id,
+                    strNombreModulo: m.strNombreModulo,
+                    menuAsignado: menuRelacionado?.strNombreMenu ?: 'Sin asignar',
+                    idMenu: menuRelacionado?.idMenu
                 ]
             }
-            render([success: true, data: data, total: Modulo.count()] as JSON)
+            
+            render([success: true, data: data, total: resultados.totalCount] as JSON)
         } catch (Exception e) {
-            render(status: 500, text: [success: false] as JSON)
+            // Imprimimos la traza real en la consola para no debuguear a ciegas en el futuro
+            e.printStackTrace()
+            render(status: 500, text: [success: false, message: "Error interno del servidor al listar"] as JSON)
         }
     }
 

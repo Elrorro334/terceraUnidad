@@ -11,16 +11,30 @@ class PerfilController {
 
     def list() {
         try {
-            int maxItems = 5
+            int maxItems = params.int('max') ?: 5
             int offsetItems = params.int('offset') ?: 0
+            String search = params.search?.trim() ?: null
+
+            def criteria = Perfil.createCriteria()
+            def resultados = criteria.list(max: maxItems, offset: offsetItems) {
+                if (search) {
+                    ilike('strNombrePerfil', "%${search}%")
+                }
+                order('id', 'desc')
+            }
             
-            def perfilesList = Perfil.list(max: maxItems, offset: offsetItems, sort: 'id', order: 'desc')
-            def totalCount = Perfil.count()
+            def data = resultados.collect { p ->
+                [
+                    id: p.id,
+                    strNombrePerfil: p.strNombrePerfil,
+                    bitAdministrador: p.bitAdministrador
+                ]
+            }
             
-            render([success: true, data: perfilesList, total: totalCount] as JSON)
+            render([success: true, data: data, total: resultados.totalCount] as JSON)
         } catch (Exception e) {
-            log.error("Error al listar perfiles: ${e.message}")
-            render(status: 500, text: [success: false, message: "Error interno del servidor"] as JSON)
+            log.error("Error al listar perfiles: ${e.message}", e)
+            render(status: 500, text: [success: false, message: "Error interno del servidor al listar"] as JSON)
         }
     }
 
@@ -30,7 +44,8 @@ class PerfilController {
             render(status: 404, text: [success: false, message: "Perfil no encontrado"] as JSON)
             return
         }
-        render([success: true, data: perfil] as JSON)
+        
+        render([success: true, data: [id: perfil.id, strNombrePerfil: perfil.strNombrePerfil, bitAdministrador: perfil.bitAdministrador]] as JSON)
     }
 
     @Transactional
@@ -38,7 +53,7 @@ class PerfilController {
         def json = request.JSON
         Perfil perfil = new Perfil(
             strNombrePerfil: json.strNombrePerfil?.trim(),
-            bitAdministrador: json.bitAdministrador ? true : false
+            bitAdministrador: false // Forzado a 0 (false)
         )
 
         try {
@@ -59,7 +74,7 @@ class PerfilController {
 
         def json = request.JSON
         perfil.strNombrePerfil = json.strNombrePerfil?.trim()
-        perfil.bitAdministrador = json.bitAdministrador ? true : false
+        perfil.bitAdministrador = false // Forzado a 0 (false)
 
         try {
             perfil.save(flush: true, failOnError: true)
@@ -81,7 +96,9 @@ class PerfilController {
             perfil.delete(flush: true, failOnError: true)
             render([success: true, message: "Perfil eliminado exitosamente"] as JSON)
         } catch (org.springframework.dao.DataIntegrityViolationException e) {
-            render(status: 409, text: [success: false, message: "No se puede eliminar porque está en uso por otros registros (Ej. Usuarios o Permisos)"] as JSON)
+            render(status: 409, text: [success: false, message: "No se puede eliminar porque está en uso por otros registros"] as JSON)
+        } catch (Exception e) {
+            render(status: 500, text: [success: false, message: "Error interno al intentar eliminar"] as JSON)
         }
     }
 }

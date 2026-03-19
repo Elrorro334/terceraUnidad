@@ -9,32 +9,49 @@ class PermisosPerfilController {
     static namespace = 'back'
     static responseFormats = ['json']
 
-    // Devuelve todos los perfiles para llenar el <select>
     def getPerfiles() {
-        render([success: true, data: Perfil.list(sort: 'strNombrePerfil')] as JSON)
+        try {
+            def perfiles = Perfil.list(sort: 'strNombrePerfil').collect { p ->
+                [id: p.id, strNombrePerfil: p.strNombrePerfil]
+            }
+            render([success: true, data: perfiles] as JSON)
+        } catch (Exception e) {
+            render(status: 500, text: [success: false, message: "Error al cargar perfiles"] as JSON)
+        }
     }
 
-    // Devuelve la matriz de permisos para un perfil específico
     def getMatriz(Long idPerfil) {
         Perfil perfil = Perfil.get(idPerfil)
-        def modulos = Modulo.list(sort: 'id')
-        
-        def matriz = modulos.collect { mod ->
-            PermisosPerfil permiso = PermisosPerfil.findByPerfilAndModulo(perfil, mod)
-            return [
-                idModulo: mod.id,
-                strNombreModulo: mod.strNombreModulo,
-                bitAgregar: permiso?.bitAgregar ?: false,
-                bitEditar: permiso?.bitEditar ?: false,
-                bitConsulta: permiso?.bitConsulta ?: false,
-                bitEliminar: permiso?.bitEliminar ?: false,
-                bitDetalle: permiso?.bitDetalle ?: false
-            ]
+        if (!perfil) {
+            render(status: 404, text: [success: false, message: "Perfil no encontrado"] as JSON)
+            return
         }
-        render([success: true, data: matriz] as JSON)
+
+        try {
+            def modulos = Modulo.list(sort: 'strNombreModulo')
+            
+            def permisosExistentes = PermisosPerfil.findAllByPerfil(perfil)
+            def permisosMap = permisosExistentes.collectEntries { [(it.modulo.id): it] }
+            
+            def matriz = modulos.collect { mod ->
+                PermisosPerfil permiso = permisosMap[mod.id]
+                [
+                    idModulo: mod.id,
+                    strNombreModulo: mod.strNombreModulo,
+                    bitConsulta: permiso?.bitConsulta ?: false,
+                    bitAgregar: permiso?.bitAgregar ?: false,
+                    bitEditar: permiso?.bitEditar ?: false,
+                    bitEliminar: permiso?.bitEliminar ?: false,
+                    bitDetalle: permiso?.bitDetalle ?: false
+                ]
+            }
+            render([success: true, data: matriz] as JSON)
+        } catch (Exception e) {
+            log.error("Error cargando matriz", e)
+            render(status: 500, text: [success: false, message: "Error interno al procesar la matriz"] as JSON)
+        }
     }
 
-    // AÑADIMOS @Transactional PARA QUE HAGA COMMIT EN LA BD
     @Transactional
     def saveMatriz() {
         def json = request.JSON
@@ -47,32 +64,28 @@ class PermisosPerfilController {
         }
 
         try {
-            // Iteramos el arreglo de módulos que mandó el frontend
+            def permisosExistentes = PermisosPerfil.findAllByPerfil(perfil).collectEntries { [(it.modulo.id): it] }
+
             json.permisos.each { row ->
-                Modulo mod = Modulo.get(row.idModulo as Long)
+                Long modId = row.idModulo as Long
+                Modulo mod = Modulo.load(modId) 
+                
                 if (mod) {
-                    PermisosPerfil permiso = PermisosPerfil.findByPerfilAndModulo(perfil, mod)
+                    PermisosPerfil permiso = permisosExistentes[modId] ?: new PermisosPerfil(perfil: perfil, modulo: mod)
                     
-                    if (!permiso) {
-                        permiso = new PermisosPerfil(perfil: perfil, modulo: mod)
-                    }
-                    
-                    // Asignamos los valores (forzando a false si vienen nulos)
+                    permiso.bitConsulta = row.bitConsulta ?: false
                     permiso.bitAgregar = row.bitAgregar ?: false
                     permiso.bitEditar = row.bitEditar ?: false
-                    permiso.bitConsulta = row.bitConsulta ?: false
                     permiso.bitEliminar = row.bitEliminar ?: false
                     permiso.bitDetalle = row.bitDetalle ?: false
                     
-                    // failOnError: true lanza una excepción si algo impide el guardado
-                    permiso.save(flush: true, failOnError: true)
+                    permiso.save(failOnError: true)
                 }
             }
             render([success: true, message: "Permisos actualizados exitosamente"] as JSON)
             
         } catch (Exception e) {
-            log.error("Error guardando matriz de permisos: ${e.message}")
-            // Rollback automático gracias a @Transactional
+            log.error("Error guardando matriz de permisos: ${e.message}", e)
             render(status: 500, text: [success: false, message: "Error interno al guardar los permisos"] as JSON)
         }
     }

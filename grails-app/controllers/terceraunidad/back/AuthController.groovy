@@ -10,7 +10,6 @@ import java.security.Key
 import groovy.json.JsonSlurper
 import org.springframework.beans.factory.annotation.Autowired
 
-// Importaciones nativas de Spring Boot para correo
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.MimeMessageHelper
 import jakarta.mail.internet.MimeMessage
@@ -71,7 +70,7 @@ class AuthController {
                 .claim("perfil", usuario.perfil.strNombrePerfil)
                 .claim("admin", usuario.perfil.bitAdministrador)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 3600000)) // 1 hora
+                .setExpiration(new Date(System.currentTimeMillis() + 3600000)) 
                 .signWith(SECRET_KEY, SignatureAlgorithm.HS256)
                 .compact()
 
@@ -100,21 +99,18 @@ class AuthController {
         }
 
         try {
-            // 1. Generamos un JWT de recuperación válido solo por 15 minutos
             String tokenRecuperacion = Jwts.builder()
                 .setSubject(usuario.strCorreo)
                 .claim("idUsuario", usuario.id)
                 .claim("tipo", "RECOVERY")
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 900000)) // 15 mins en milisegundos
+                .setExpiration(new Date(System.currentTimeMillis() + 900000))
                 .signWith(SECRET_KEY, SignatureAlgorithm.HS256)
                 .compact()
 
-            // 2. Construimos la URL dinámica hacia la nueva vista
             String baseUrl = request.scheme + "://" + request.serverName + ":" + request.serverPort
             String enlaceReset = "${baseUrl}/front/auth/resetPassword?token=${tokenRecuperacion}"
 
-            // 3. Enviamos el correo con diseño corporativo
             MimeMessage message = javaMailSender.createMimeMessage()
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8")
             
@@ -164,7 +160,6 @@ class AuthController {
         }
 
         try {
-            // Validamos que el token sea nuestro, no esté expirado y sea tipo RECOVERY
             def claims = Jwts.parserBuilder()
                     .setSigningKey(SECRET_KEY)
                     .build()
@@ -184,7 +179,6 @@ class AuthController {
                 return
             }
 
-            // Aplicamos la nueva contraseña
             usuario.strPwd = nuevaContrasena
             usuario.save(flush: true, failOnError: true)
 
@@ -215,7 +209,6 @@ class AuthController {
             return responseJson.success == true
             
         } catch (Exception e) {
-            // Este error salta si no hay internet o el firewall bloquea Java
             log.error("Fallo de red al validar reCAPTCHA: ${e.message}")
             return false
         }

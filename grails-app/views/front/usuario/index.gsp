@@ -7,11 +7,28 @@
 <body>
 
 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-    <div class="p-6 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+    <div class="p-6 border-b border-gray-200 flex flex-col md:flex-row justify-between items-center bg-gray-50 gap-4">
         <h2 class="text-xl font-bold text-oxford">Gestión de Usuarios</h2>
-        <button id="btn-nuevo" onclick="abrirModal()" class="bg-cobalto hover:bg-blue-800 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition-colors">
-            + Nuevo Usuario
-        </button>
+        
+        <div class="flex flex-col sm:flex-row w-full md:w-auto space-y-3 sm:space-y-0 sm:space-x-3 items-center">
+            <div class="flex w-full sm:w-80 relative">
+                <input type="text" id="input-busqueda" placeholder="Buscar por usuario o correo..." 
+                       class="w-full border border-gray-300 rounded-l-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cobalto z-10" 
+                       oninput="toggleBotonLimpiar()" onkeypress="ejecutarBusquedaEnter(event)">
+                
+                <button onclick="limpiarBusqueda()" id="btn-clear-input" class="hidden absolute right-12 top-2 text-gray-400 hover:text-red-500 z-20" title="Limpiar">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+
+                <button onclick="ejecutarBusqueda()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-r-lg border-y border-r border-gray-300 transition-colors z-10" title="Buscar">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </button>
+            </div>
+
+            <button id="btn-nuevo" onclick="abrirModal()" class="w-full sm:w-auto bg-cobalto hover:bg-blue-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm whitespace-nowrap">
+                + Nuevo Usuario
+            </button>
+        </div>
     </div>
 
     <div class="overflow-x-auto">
@@ -30,71 +47,79 @@
         </table>
     </div>
 
-    <div class="p-4 border-t border-gray-200 flex items-center justify-between bg-gray-50">
+    <div class="p-4 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between bg-gray-50 gap-4">
         <span class="text-sm text-gray-500" id="info-paginacion">Mostrando 0 a 0 de 0 registros</span>
         <div class="flex space-x-1 md:space-x-2">
-            <button type="button" onclick="cambiarPagina('inicio')" id="btn-inicio" class="px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm transition-colors" title="Ir a la primera página">&laquo; Inicio</button>
+            <button type="button" onclick="cambiarPagina('inicio')" id="btn-inicio" class="px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm transition-colors">&laquo; Inicio</button>
             <button type="button" onclick="cambiarPagina('prev')" id="btn-prev" class="px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm transition-colors">Anterior</button>
             <button type="button" onclick="cambiarPagina('next')" id="btn-next" class="px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm transition-colors">Siguiente</button>
-            <button type="button" onclick="cambiarPagina('final')" id="btn-final" class="px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm transition-colors" title="Ir a la última página">Final &raquo;</button>
+            <button type="button" onclick="cambiarPagina('final')" id="btn-final" class="px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm transition-colors">Final &raquo;</button>
         </div>
     </div>
 </div>
 
-<div id="modal-usuario" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10">
+<div id="modal-usuario" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden flex items-center justify-center z-50 p-4 overflow-y-auto">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden transform transition-all my-8">
+        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
             <h3 class="text-lg font-bold text-oxford" id="modal-titulo">Nuevo Usuario</h3>
             <button onclick="cerrarModal()" class="text-gray-400 hover:text-gray-600 focus:outline-none">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
         </div>
         <div class="p-6">
-            <form id="form-usuario" onsubmit="guardarUsuario(event)" autocomplete="off">
+            <form id="form-usuario" onsubmit="guardarUsuario(event)" autocomplete="off" enctype="multipart/form-data">
                 <input type="hidden" id="usuario-id">
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
+                    <div class="mb-2">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Nombre de Usuario <span class="text-red-500">*</span></label>
-                        <input type="text" id="strNombreUsuario" required minlength="4" maxlength="20" oninput="this.value = this.value.replace(/[^a-zA-Z0-9_.-]/g, '')" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cobalto">
+                        <input type="text" id="strNombreUsuario" required minlength="4" maxlength="50" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cobalto">
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Contraseña <span id="req-pwd" class="text-red-500">*</span></label>
-                        <input type="password" id="strPwd" minlength="8" maxlength="50" oninput="this.value = this.value.replace(/\s/g, '')" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cobalto" placeholder="Mínimo 8 caracteres">
-                    </div>
-                    <div>
+
+                    <div class="mb-2">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Correo Electrónico <span class="text-red-500">*</span></label>
-                        <input type="email" id="strCorreo" required maxlength="100" oninput="this.value = this.value.replace(/\s/g, '')" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cobalto">
+                        <input type="email" id="strCorreo" required maxlength="100" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cobalto">
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Celular (10 dígitos)</label>
-                        <input type="text" id="strNumeroCelular" required minlength="10" maxlength="10" pattern="\d{10}" title="Debe contener exactamente 10 números" oninput="this.value = this.value.replace(/[^0-9]/g, '')" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cobalto">
+
+                    <div class="mb-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Contraseña <span id="req-pwd" class="text-red-500">*</span></label>
+                        <input type="password" id="strPwd" minlength="6" maxlength="50" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cobalto">
                     </div>
-                    <div>
+
+                    <div class="mb-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Número Celular</label>
+                        <input type="text" id="strNumeroCelular" maxlength="20" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cobalto">
+                    </div>
+
+                    <div class="mb-2">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Perfil <span class="text-red-500">*</span></label>
-                        <select id="idPerfil" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cobalto bg-white"></select>
+                        <select id="idPerfil" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cobalto bg-white">
+                            <option value="">-- Seleccione un Perfil --</option>
+                        </select>
                     </div>
-                    <div>
+
+                    <div class="mb-2">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Estado</label>
                         <select id="idEstadoUsuario" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cobalto bg-white">
-                            <option value="ACTIVO">ACTIVO</option>
-                            <option value="INACTIVO">INACTIVO</option>
+                            <option value="ACTIVO">Activo</option>
+                            <option value="INACTIVO">Inactivo</option>
                         </select>
                     </div>
                 </div>
 
-                <div class="mt-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Imagen de Perfil (Opcional, Max 2MB)</label>
-                    <input type="file" id="imagenPerfil" accept="image/png, image/jpeg" onchange="previsualizarImagenSegura(event)" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cobalto bg-white">
-                    <div id="preview-container" class="mt-3 hidden flex items-center space-x-3">
-                        <img id="img-preview" src="" alt="Preview" class="h-16 w-16 object-cover rounded-full border border-gray-300 shadow-sm">
-                        <span class="text-xs text-gray-500 font-medium">Vista previa segura verificada</span>
+                <div class="mt-4 border-t border-gray-200 pt-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Fotografía de Perfil (Opcional, max 2MB)</label>
+                    <div class="flex items-center space-x-4">
+                        <input type="file" id="imagenPerfil" accept=".jpg,.jpeg,.png" onchange="previsualizarImagenSegura(event)" class="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-cobalto hover:file:bg-blue-100 transition-colors">
+                        <div id="preview-container" class="hidden">
+                            <img id="img-preview" src="" alt="Vista previa" class="h-16 w-16 object-cover rounded-full border border-gray-300 shadow-sm">
+                        </div>
                     </div>
                 </div>
 
                 <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
                     <button type="button" onclick="cerrarModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">Cancelar</button>
-                    <button type="submit" id="btnGuardar" class="px-4 py-2 bg-cobalto hover:bg-blue-800 text-white rounded-lg transition-colors shadow-sm text-sm font-medium">Guardar Usuario</button>
+                    <button type="submit" id="btnGuardar" class="px-4 py-2 bg-cobalto hover:bg-blue-800 text-white rounded-lg shadow-sm text-sm font-medium">Guardar Usuario</button>
                 </div>
             </form>
         </div>
@@ -105,18 +130,53 @@
     let offsetActual = 0;
     const LIMITE = 5;
     let totalRegistros = 0;
+    let terminoBusquedaActual = '';
 
     if(typeof toastr !== 'undefined') { toastr.options = { "escapeHtml": true, "timeOut": "6000" }; }
 
-    function sanitizarEntrada(texto) { 
-        return texto ? texto.replace(/[<>'"=;]/g, '').trim() : ''; 
-    }
+    function sanitizarEntrada(texto) { return texto ? texto.replace(/[<>'"=;]/g, '').trim() : ''; }
 
     function esEntradaPeligrosa(texto) {
         if(!texto) return false;
         const regexPeligro = /(<|>|;|--|\/\*|\*\/|union\s|select\s|insert\s|drop\s|delete\s|update\s|script|onload|onerror|eval)/i;
         const regexGroserias = /(sex|puto|puta|pendej|mierd|cabron|verga|culo|bitch|fuck|dick|ass)/i;
         return regexPeligro.test(texto) || regexGroserias.test(texto);
+    }
+
+    function toggleBotonLimpiar() {
+        const input = document.getElementById('input-busqueda');
+        const btn = document.getElementById('btn-clear-input');
+        if (input.value.length > 0) btn.classList.remove('hidden');
+        else btn.classList.add('hidden');
+    }
+
+    function limpiarBusqueda() {
+        document.getElementById('input-busqueda').value = '';
+        terminoBusquedaActual = '';
+        offsetActual = 0;
+        document.getElementById('btn-clear-input').classList.add('hidden');
+        cargarUsuarios();
+    }
+
+    function ejecutarBusquedaEnter(event) { if (event.key === "Enter") ejecutarBusqueda(); }
+
+    function ejecutarBusqueda() {
+        const inputVal = document.getElementById('input-busqueda').value;
+        const limpio = sanitizarEntrada(inputVal);
+        
+        if (esEntradaPeligrosa(limpio)) {
+            toastr.error('Término de búsqueda no permitido.', 'Seguridad');
+            return;
+        }
+
+        terminoBusquedaActual = limpio;
+        offsetActual = 0;
+        
+        const btnLimpiar = document.getElementById('btn-clear-input');
+        if (terminoBusquedaActual !== '') btnLimpiar.classList.remove('hidden');
+        else btnLimpiar.classList.add('hidden');
+        
+        cargarUsuarios();
     }
 
     let misPermisos = { agregar: false, editar: false, eliminar: false, consulta: false };
@@ -126,32 +186,17 @@
         if (mapaStr) {
             const mapa = JSON.parse(mapaStr);
             const pathActual = window.location.pathname;
-            if (mapa[pathActual]) {
-                misPermisos = mapa[pathActual];
-            }
+            if (mapa[pathActual]) { misPermisos = mapa[pathActual]; }
         }
-        
-        if (!misPermisos.agregar) {
-            document.getElementById('btn-nuevo').style.display = 'none';
-        }
-
-        if (misPermisos.consulta) {
-            cargarUsuarios(); 
-            cargarPerfilesSelect();
-        } else {
-            document.getElementById('tabla-usuarios').innerHTML = '<tr><td colspan="6" class="p-4 text-center text-red-500 font-medium">No tiene permisos para consultar datos.</td></tr>';
-        }
+        if (!misPermisos.agregar) { document.getElementById('btn-nuevo').style.display = 'none'; }
+        if (misPermisos.consulta) { cargarUsuarios(); cargarPerfilesSelect(); }
     });
 
     function getAuthHeaders(isFormData = false) {
         const token = localStorage.getItem('rodnix_jwt');
         if (!token) { window.location.href = '/front/auth/login'; return null; }
-        
         let headers = { 'Authorization': 'Bearer ' + token };
-        if (!isFormData) {
-            headers['Content-Type'] = 'application/json';
-            headers['Accept'] = 'application/json';
-        }
+        if (!isFormData) { headers['Content-Type'] = 'application/json'; headers['Accept'] = 'application/json'; }
         return headers;
     }
 
@@ -162,107 +207,86 @@
                 const perfiles = (await res.json()).data;
                 const select = document.getElementById('idPerfil');
                 select.innerHTML = '<option value="">-- Seleccione un Perfil --</option>';
-                perfiles.forEach(function(p) {
-                    select.innerHTML += '<option value="' + p.id + '">' + p.strNombrePerfil + '</option>';
-                });
+                perfiles.forEach(p => { select.innerHTML += '<option value="' + p.id + '">' + p.strNombrePerfil + '</option>'; });
             }
-        } catch(error) { console.error('Error cargando perfiles'); }
+        } catch(e) {}
     }
 
     async function cargarUsuarios() {
         const headers = getAuthHeaders();
         if (!headers) return;
+        let url = '/back/usuario/list?offset=' + offsetActual + '&max=' + LIMITE;
+        if (terminoBusquedaActual) url += '&search=' + encodeURIComponent(terminoBusquedaActual);
+
         try {
-            const response = await fetch('/back/usuario/list?offset=' + offsetActual + '&max=' + LIMITE, { headers: headers });
+            const response = await fetch(url, { headers: headers });
             if (response.ok) {
                 const result = await response.json();
                 totalRegistros = result.total;
                 renderizarTabla(result.data);
                 actualizarPaginacion();
-            } else if (response.status === 401 || response.status === 403) {
-                window.location.href = '/front/auth/login';
             } else {
-                toastr.error('Error al obtener la lista de usuarios');
+                const resultError = await response.json().catch(() => ({}));
+                toastr.error(resultError.message || 'Error interno en el servidor', 'Error ' + response.status);
             }
-        } catch (error) { toastr.error('Fallo de red al cargar usuarios', 'Error Crítico'); }
+        } catch (e) { toastr.error('Error de red al conectar con el servidor', 'Error'); }
     }
 
     function renderizarTabla(usuarios) {
         const tbody = document.getElementById('tabla-usuarios');
         tbody.innerHTML = '';
-        if(usuarios.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-500">Sin datos registrados</td></tr>'; return; }
         
-        usuarios.forEach(function(u) {
+        if(usuarios.length === 0) { 
+            const msg = terminoBusquedaActual ? 'No se encontraron resultados para "' + terminoBusquedaActual + '"' : 'Sin datos registrados';
+            tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-500">' + msg + '</td></tr>'; 
+            return; 
+        }
+        
+        usuarios.forEach(u => {
+            const imgHtml = u.imagenBase64 
+                ? '<img src="' + u.imagenBase64 + '" class="h-10 w-10 rounded-full object-cover border mx-auto">' 
+                : '<div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-cobalto font-bold mx-auto">' + u.strNombreUsuario.charAt(0).toUpperCase() + '</div>';
+            
+            const badge = u.idEstadoUsuario === 'ACTIVO' 
+                ? '<span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">ACTIVO</span>' 
+                : '<span class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold">INACTIVO</span>';
+            
+            let btns = '';
+            if (misPermisos.editar) btns += '<button onclick="editarUsuario(' + u.id + ')" class="text-blue-600 hover:text-blue-800 text-sm font-medium mr-3">Editar</button>';
+            if (misPermisos.eliminar) btns += '<button onclick="eliminarUsuario(' + u.id + ')" class="text-red-600 hover:text-red-800 text-sm font-medium">Eliminar</button>';
+            
             const tr = document.createElement('tr');
             tr.className = 'hover:bg-gray-50 transition-colors';
-            
-            const imgHtml = u.imagenBase64 
-                ? '<img src="' + u.imagenBase64 + '" class="h-10 w-10 rounded-full object-cover border border-gray-200 mx-auto">' 
-                : '<div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-cobalto font-bold mx-auto">' + u.strNombreUsuario.charAt(0).toUpperCase() + '</div>';
-
-            const badgeEstado = u.idEstadoUsuario === 'ACTIVO' 
-                ? '<span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">ACTIVO</span>'
-                : '<span class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold">INACTIVO</span>';
-
-            let botonesAccion = '';
-            if (misPermisos.editar) {
-                botonesAccion += '<button onclick="editarUsuario(' + u.id + ')" class="text-blue-600 hover:text-blue-800 text-sm font-medium mr-3">Editar</button>';
-            }
-            if (misPermisos.eliminar) {
-                botonesAccion += '<button onclick="eliminarUsuario(' + u.id + ')" class="text-red-600 hover:text-red-800 text-sm font-medium">Eliminar</button>';
-            }
-            if (!misPermisos.editar && !misPermisos.eliminar) {
-                botonesAccion = '<span class="text-gray-400 text-xs italic">Sin permisos</span>';
-            }
-
             tr.innerHTML = 
                 '<td class="p-4 align-middle">' + imgHtml + '</td>' +
-                '<td class="p-4 font-medium text-oxford align-middle">' + u.strNombreUsuario + '</td>' +
-                '<td class="p-4 text-gray-600 align-middle">' + u.strCorreo + '</td>' +
-                '<td class="p-4 text-gray-600 align-middle">' + (u.perfil ? u.perfil.strNombrePerfil : 'N/A') + '</td>' +
-                '<td class="p-4 align-middle">' + badgeEstado + '</td>' +
-                '<td class="p-4 text-right align-middle">' + botonesAccion + '</td>';
+                '<td class="p-4 font-medium text-oxford">' + u.strNombreUsuario + '</td>' +
+                '<td class="p-4 text-gray-600">' + u.strCorreo + '</td>' +
+                '<td class="p-4 text-gray-600">' + (u.perfil?.strNombrePerfil || '<span class="italic">N/A</span>') + '</td>' +
+                '<td class="p-4">' + badge + '</td>' +
+                '<td class="p-4 text-right">' + (btns || '<span class="text-gray-400 italic">Sin permisos</span>') + '</td>';
+            
             tbody.appendChild(tr);
         });
     }
 
     function actualizarPaginacion() {
         const spanInfo = document.getElementById('info-paginacion');
-        const btnInicio = document.getElementById('btn-inicio');
-        const btnPrev = document.getElementById('btn-prev');
-        const btnNext = document.getElementById('btn-next');
-        const btnFinal = document.getElementById('btn-final');
-
-        let mostrandoHasta = offsetActual + LIMITE;
-        if (mostrandoHasta > totalRegistros) mostrandoHasta = totalRegistros;
-        let mostrandoDesde = totalRegistros === 0 ? 0 : offsetActual + 1;
-
-        spanInfo.textContent = 'Mostrando ' + mostrandoDesde + ' a ' + mostrandoHasta + ' de ' + totalRegistros + ' registros';
-
-        const esPrimeraPagina = offsetActual === 0;
-        const esUltimaPagina = (offsetActual + LIMITE) >= totalRegistros;
-
-        btnInicio.disabled = esPrimeraPagina;
-        btnPrev.disabled = esPrimeraPagina;
-        btnNext.disabled = esUltimaPagina || totalRegistros === 0;
-        btnFinal.disabled = esUltimaPagina || totalRegistros === 0;
+        let hasta = Math.min(offsetActual + LIMITE, totalRegistros);
+        spanInfo.textContent = 'Mostrando ' + (totalRegistros === 0 ? 0 : offsetActual + 1) + ' a ' + hasta + ' de ' + totalRegistros;
+        
+        const esUltima = (offsetActual + LIMITE) >= totalRegistros || totalRegistros === 0;
+        
+        document.getElementById('btn-inicio').disabled = offsetActual === 0;
+        document.getElementById('btn-prev').disabled = offsetActual === 0;
+        document.getElementById('btn-next').disabled = esUltima;
+        document.getElementById('btn-final').disabled = esUltima;
     }
 
     function cambiarPagina(accion) {
-        if (accion === 'inicio') {
-            offsetActual = 0;
-        } else if (accion === 'prev') {
-            offsetActual -= LIMITE;
-            if (offsetActual < 0) offsetActual = 0;
-        } else if (accion === 'next') {
-            offsetActual += LIMITE;
-        } else if (accion === 'final') {
-            if (totalRegistros > 0) {
-                offsetActual = Math.floor((totalRegistros - 1) / LIMITE) * LIMITE;
-            } else {
-                offsetActual = 0;
-            }
-        }
+        if (accion === 'inicio') offsetActual = 0;
+        else if (accion === 'prev') offsetActual = Math.max(0, offsetActual - LIMITE);
+        else if (accion === 'next') offsetActual += LIMITE;
+        else if (accion === 'final') offsetActual = Math.max(0, Math.floor((totalRegistros - 1) / LIMITE) * LIMITE);
         cargarUsuarios();
     }
 

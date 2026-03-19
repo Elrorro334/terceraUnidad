@@ -3,12 +3,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (navContainer) {
         cargarMenuDesdeBackend();
     }
-    // Renderizar breadcrumbs inmediatamente en la carga de página
     renderizarBreadcrumbDOM(); 
 });
 
 async function cargarMenuDesdeBackend() {
-    // Asumo que guardas tu token aquí tras el login exitoso
     const token = localStorage.getItem('rodnix_jwt'); 
     
     if (!token) {
@@ -29,7 +27,6 @@ async function cargarMenuDesdeBackend() {
             const data = await response.json();
             construirMenuDOM(data);
         } else {
-            // Si el token falló, redireccionar al login [cite: 24]
             localStorage.removeItem('rodnix_jwt');
             window.location.href = '/front/auth/login';
         }
@@ -64,7 +61,6 @@ function construirMenuDOM(menus) {
             aHijo.className = 'block px-6 py-3 hover:bg-[#244b7a] text-white transition-colors whitespace-nowrap';
             aHijo.textContent = modulo.nombre;
             
-            // Guardar para el Breadcrumb al navegar
             aHijo.addEventListener('click', () => {
                 sessionStorage.setItem('bc_padre', menuPadre.nombreMenuPadre);
                 sessionStorage.setItem('bc_hijo', modulo.nombre);

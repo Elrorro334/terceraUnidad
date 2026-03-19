@@ -15,25 +15,51 @@ class UsuarioController {
 
     def list() {
         try {
-            int maxItems = 5
+            int maxItems = params.int('max') ?: 5
             int offsetItems = params.int('offset') ?: 0
-            def usuarios = Usuario.list(max: maxItems, offset: offsetItems, sort: 'id', order: 'desc')
+            String search = params.search?.trim() ?: null
+
+            def criteria = Usuario.createCriteria()
+            def resultados = criteria.list(max: maxItems, offset: offsetItems) {
+                // CORRECCIÓN 1: Usamos 'join' en lugar de 'createAlias' para prevenir el N+1 
+                // sin alterar la estructura de la entidad de retorno.
+                join 'perfil'
+                
+                if (search) {
+                    or {
+                        ilike('strNombreUsuario', "%${search}%")
+                        ilike('strCorreo', "%${search}%")
+                    }
+                }
+                order('id', 'desc')
+            }
             
-            def data = usuarios.collect { u ->
-                [
+            def data = resultados.collect { u ->
+                // CORRECCIÓN 2: Generamos el Base64 como un String nativo estricto para no romper el convertidor JSON
+                String imgBase64 = null
+                if (u.imagenPerfil) {
+                    imgBase64 = "data:image/jpeg;base64," + java.util.Base64.getEncoder().encodeToString(u.imagenPerfil)
+                }
+
+                return [
                     id: u.id,
                     strNombreUsuario: u.strNombreUsuario,
                     strCorreo: u.strCorreo,
                     strNumeroCelular: u.strNumeroCelular,
                     idEstadoUsuario: u.idEstadoUsuario,
-                    perfil: [id: u.perfil?.id, strNombrePerfil: u.perfil?.strNombrePerfil],
-                    imagenBase64: u.imagenPerfil ? "data:image/jpeg;base64,${u.imagenPerfil.encodeBase64()}" : null
+                    perfil: [
+                        id: u.perfil?.id, 
+                        strNombrePerfil: u.perfil?.strNombrePerfil
+                    ],
+                    imagenBase64: imgBase64
                 ]
             }
-            render([success: true, data: data, total: Usuario.count()] as JSON)
+            
+            render([success: true, data: data, total: resultados.totalCount] as JSON)
+            
         } catch (Exception e) {
-            log.error("Error al listar usuarios: ${e.message}")
-            render(status: 500, text: [success: false, message: "Error interno del servidor"] as JSON)
+            log.error("Error al listar usuarios: ${e.message}", e)
+            render(status: 500, text: [success: false, message: "Error interno del servidor al procesar los datos"] as JSON)
         }
     }
 
@@ -57,25 +83,21 @@ class UsuarioController {
 
     // --- FUNCIÓN PRIVADA DE SEGURIDAD PARA ARCHIVOS ---
     private boolean esImagenValida(MultipartFile archivo) {
-        if (!archivo || archivo.empty) return true // Es opcional, así que si no hay archivo, pasa la validación.
+        if (!archivo || archivo.empty) return true
 
-        // 1. Validar tamaño en el servidor (Ej: 2MB = 2097152 bytes)
         if (archivo.size > 2097152) return false
 
-        // 2. Validar tipo MIME reportado
         def validMimeTypes = ['image/jpeg', 'image/png', 'image/jpg']
         if (!validMimeTypes.contains(archivo.contentType)) return false
 
-        // 3. Validar extensión del archivo
         def filename = archivo.originalFilename?.toLowerCase()
         if (!filename || (!filename.endsWith('.jpg') && !filename.endsWith('.jpeg') && !filename.endsWith('.png'))) return false
 
-        // 4. DEEP SCAN: Intentar leer los bytes como imagen real (Previene ejecutables disfrazados .exe.png)
         try {
             def image = ImageIO.read(new ByteArrayInputStream(archivo.bytes))
-            if (image == null) return false // No es una imagen decodificable
+            if (image == null) return false 
         } catch (Exception e) {
-            return false // Falló al intentar procesar la imagen
+            return false 
         }
 
         return true
@@ -93,7 +115,6 @@ class UsuarioController {
 
             MultipartFile archivoImagen = request.getFile('imagenPerfil')
             
-            // Validamos seguridad del archivo antes de armar el objeto
             if (archivoImagen && !archivoImagen.empty && !esImagenValida(archivoImagen)) {
                 render(status: 400, text: [success: false, message: "El archivo subido no es una imagen válida o excede los 2MB."] as JSON)
                 return
@@ -116,8 +137,8 @@ class UsuarioController {
             render([success: true, message: "Usuario creado exitosamente"] as JSON)
             
         } catch (Exception e) {
-            log.error("Error al guardar usuario: ${e.message}")
-            render(status: 400, text: [success: false, message: "Error de validación: Verifique que el usuario no esté duplicado."] as JSON)
+            log.error("Error al guardar usuario: ${e.message}", e)
+            render(status: 400, text: [success: false, message: "Error de validación: Verifique que el usuario o correo no estén duplicados."] as JSON)
         }
     }
 
@@ -132,7 +153,6 @@ class UsuarioController {
 
             MultipartFile archivoImagen = request.getFile('imagenPerfil')
             
-            // Validación estricta del archivo
             if (archivoImagen && !archivoImagen.empty && !esImagenValida(archivoImagen)) {
                 render(status: 400, text: [success: false, message: "El archivo subido no es una imagen válida o excede los 2MB."] as JSON)
                 return
@@ -158,7 +178,7 @@ class UsuarioController {
             render([success: true, message: "Usuario actualizado exitosamente"] as JSON)
             
         } catch (Exception e) {
-            log.error("Error al actualizar usuario: ${e.message}")
+            log.error("Error al actualizar usuario: ${e.message}", e)
             render(status: 400, text: [success: false, message: "Error al actualizar los datos del usuario."] as JSON)
         }
     }
@@ -174,7 +194,7 @@ class UsuarioController {
             usuario.delete(flush: true, failOnError: true)
             render([success: true, message: "Usuario eliminado permanentemente"] as JSON)
         } catch (Exception e) {
-            log.error("Error al eliminar usuario: ${e.message}")
+            log.error("Error al eliminar usuario: ${e.message}", e)
             render(status: 409, text: [success: false, message: "Hubo un error al intentar eliminar el usuario."] as JSON)
         }
     }

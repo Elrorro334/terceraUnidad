@@ -7,11 +7,29 @@
 <body>
 
 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-    <div class="p-6 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+    <div class="p-6 border-b border-gray-200 flex flex-col md:flex-row justify-between items-center bg-gray-50 gap-4">
         <h2 class="text-xl font-bold text-oxford">Gestión de Módulos</h2>
-        <button id="btn-nuevo" onclick="abrirModal()" class="bg-cobalto hover:bg-blue-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm">
-            + Nuevo Módulo
-        </button>
+        
+        <div class="flex flex-col sm:flex-row w-full md:w-auto space-y-3 sm:space-y-0 sm:space-x-3 items-center">
+            
+            <div class="flex w-full sm:w-72 relative">
+                <input type="text" id="input-busqueda" placeholder="Buscar por nombre..." 
+                       class="w-full border border-gray-300 rounded-l-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cobalto z-10" 
+                       onkeypress="if(event.key === 'Enter') buscarModulos()">
+                
+                <button onclick="limpiarBusqueda()" id="btn-limpiar" class="hidden absolute right-12 top-2 text-gray-400 hover:text-red-500 z-20" title="Limpiar">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+
+                <button onclick="buscarModulos()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-r-lg border-y border-r border-gray-300 transition-colors z-10" title="Buscar">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </button>
+            </div>
+
+            <button id="btn-nuevo" onclick="abrirModal()" class="w-full sm:w-auto bg-cobalto hover:bg-blue-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm whitespace-nowrap">
+                + Nuevo Módulo
+            </button>
+        </div>
     </div>
 
     <div class="overflow-x-auto">
@@ -27,7 +45,7 @@
         </table>
     </div>
 
-    <div class="p-4 border-t border-gray-200 flex items-center justify-between bg-gray-50">
+    <div class="p-4 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between bg-gray-50 gap-4">
         <span class="text-sm text-gray-500" id="info-paginacion">Mostrando 0 a 0 de 0 registros</span>
         <div class="flex space-x-1 md:space-x-2">
             <button onclick="cambiarPagina('inicio')" id="btn-inicio" class="px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm transition-colors" title="Ir a la primera página">&laquo; Inicio</button>
@@ -84,16 +102,14 @@
 <script>
     let offsetActual = 0;
     const LIMITE = 5;
-    let totalRegistros = 0; // Variable global para saber dónde está el final
+    let totalRegistros = 0; 
     let isNuevoMenu = false; 
+    let terminoBusqueda = ''; // Nueva variable de estado para la búsqueda
 
-    // PROTECCIÓN TOASTR: Evita inyección HTML
     if(typeof toastr !== 'undefined') { toastr.options = { "escapeHtml": true }; }
 
-    // PROTECCIÓN XSS: Limpia picos < y >
     function sanitizarEntrada(texto) { return texto ? texto.replace(/[<>]/g, '').trim() : ''; }
 
-    // --- SEGURIDAD: LÓGICA DE PERMISOS ---
     let misPermisos = { agregar: false, editar: false, eliminar: false, consulta: false };
 
     document.addEventListener('permisosCargados', function() { 
@@ -124,6 +140,31 @@
         return { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Accept': 'application/json' };
     }
 
+    // --- NUEVAS FUNCIONES DE BÚSQUEDA ---
+    function buscarModulos() {
+        const input = document.getElementById('input-busqueda');
+        terminoBusqueda = sanitizarEntrada(input.value);
+        offsetActual = 0; // Reiniciar paginación al buscar
+        
+        const btnLimpiar = document.getElementById('btn-limpiar');
+        if (terminoBusqueda !== '') {
+            btnLimpiar.classList.remove('hidden');
+        } else {
+            btnLimpiar.classList.add('hidden');
+        }
+        
+        cargarModulos();
+    }
+
+    function limpiarBusqueda() {
+        document.getElementById('input-busqueda').value = '';
+        terminoBusqueda = '';
+        offsetActual = 0;
+        document.getElementById('btn-limpiar').classList.add('hidden');
+        cargarModulos();
+    }
+    // ------------------------------------
+
     async function cargarGruposMenu() {
         const headers = getAuthHeaders();
         if (!headers) return;
@@ -147,24 +188,43 @@
     async function cargarModulos() {
         const headers = getAuthHeaders();
         if (!headers) return;
+        
+        let url = '/back/modulo/list?offset=' + offsetActual + '&max=' + LIMITE;
+        if (terminoBusqueda) {
+            url += '&search=' + encodeURIComponent(terminoBusqueda);
+        }
+
         try {
-            const response = await fetch('/back/modulo/list?offset=' + offsetActual + '&max=' + LIMITE, { headers: headers });
+            const response = await fetch(url, { headers: headers });
+            
             if (response.ok) {
                 const result = await response.json();
-                totalRegistros = result.total; // Actualizamos el total global
+                totalRegistros = result.total; 
                 renderizarTabla(result.data);
                 actualizarPaginacion();
             } else if (response.status === 401 || response.status === 403) { 
                 localStorage.removeItem('rodnix_jwt');
                 window.location.href = '/front/auth/login'; 
+            } else {
+                // Ahora capturará correctamente los errores 400 y 500
+                const resultError = await response.json().catch(() => ({}));
+                toastr.error(resultError.message || 'Error interno en el servidor', 'Error ' + response.status);
             }
-        } catch (error) { toastr.error('Fallo al cargar los módulos', 'Error Crítico'); }
+        } catch (error) { 
+            toastr.error('Fallo de conexión al servidor', 'Error Crítico'); 
+        }
     }
 
     function renderizarTabla(modulos) {
         const tbody = document.getElementById('tabla-modulos');
         tbody.innerHTML = '';
-        if(modulos.length === 0) { tbody.innerHTML = '<tr><td colspan="3" class="p-4 text-center text-gray-500">Sin datos registrados</td></tr>'; return; }
+        
+        // Pequeño ajuste en caso de que una búsqueda no retorne datos
+        if(modulos.length === 0) { 
+            const msg = terminoBusqueda ? 'No se encontraron resultados para "' + terminoBusqueda + '"' : 'Sin datos registrados';
+            tbody.innerHTML = '<tr><td colspan="3" class="p-8 text-center text-gray-500">' + msg + '</td></tr>'; 
+            return; 
+        }
         
         modulos.forEach(function(m) {
             const tr = document.createElement('tr');
@@ -275,8 +335,6 @@
         if (!headers) return;
 
         const id = document.getElementById('modulo-id').value;
-        
-        // APLICACIÓN ANTI-XSS AQUÍ
         const nombreMod = sanitizarEntrada(document.getElementById('strNombreModulo').value);
         
         let idMenuVal = null;
